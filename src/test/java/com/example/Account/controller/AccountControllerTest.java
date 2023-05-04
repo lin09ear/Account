@@ -7,7 +7,7 @@ import com.example.Account.dto.DeleteAccount;
 import com.example.Account.exception.AccountException;
 import com.example.Account.type.AccountStatus;
 import com.example.Account.service.AccountService;
-import com.example.Account.service.RedisTestService;
+import com.example.Account.type.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.redisson.client.protocol.decoder.ObjectMapDecoder;
@@ -36,9 +36,6 @@ class AccountControllerTest {
 
     @MockBean
     private AccountService accountService;
-
-    @MockBean
-    private RedisTestService redisTestService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -146,4 +143,20 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.accountStatus").value("IN_USE"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void failGetAccount() throws Exception {
+        //given
+        given(accountService.getAccount(anyLong()))
+                .willThrow(new AccountException(ErrorCode.ACCOUNT_NOT_FOUND));
+        //when
+        //then
+
+        mockMvc.perform(get("/account/876"))
+                .andDo(print())
+                .andExpect(jsonPath("$.errorCode").value("ACCOUNT_NOT_FOUND"))
+                .andExpect(jsonPath("$.errorMessage").value("계좌가 없습니다."))
+                .andExpect(status().isOk());
+    }
+
 }
